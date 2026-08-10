@@ -36,6 +36,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# private review notes (not for GitHub)
+review-notes/
+
 # generated native folders
 /ios
 /android
