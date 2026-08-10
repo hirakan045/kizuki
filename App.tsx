@@ -4,7 +4,10 @@ import HealthKit, {
   isHealthDataAvailable,
   requestAuthorization,
 } from "@kingstinct/react-native-healthkit";
-import { fetchSleepMinutes } from "./src/lib/healthkit";
+import { fetchSleep, fetchSleepMinutes, fetchSteps } from "./src/lib/healthkit";
+import { toDateKey } from "./src/utils/date";
+import { getDay, saveDay, getDays } from "./src/storage/dayRecord";
+import { getRecentDateKeys } from "./src/utils/date";
 
 export default function App() {
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -29,55 +32,6 @@ export default function App() {
     }
   };
 
-  // 歩数（統計クエリ = iPhone と Watch の重複を HealthKit 側で排除）
-  const fetchSteps = async () => {
-    try {
-      const now = new Date();
-      const startOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-      );
-
-      const result = await HealthKit.queryStatisticsForQuantity(
-        "HKQuantityTypeIdentifierStepCount",
-        ["cumulativeSum"],
-        {
-          filter: {
-            date: { startDate: startOfDay, endDate: now },
-          },
-        },
-      );
-
-      console.log("歩数の統計:", JSON.stringify(result, null, 2));
-    } catch (e) {
-      console.error("歩数取得失敗", e);
-    }
-  };
-
-  // 睡眠（Category 型なので別関数）
-  const fetchSleep = async () => {
-    try {
-      const now = new Date();
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-      const samples = await HealthKit.queryCategorySamples(
-        "HKCategoryTypeIdentifierSleepAnalysis",
-        {
-          limit: 0,
-          filter: {
-            date: { startDate: yesterday, endDate: now },
-          },
-        },
-      );
-
-      console.log("睡眠サンプル数:", samples.length);
-      console.log("睡眠データ:", JSON.stringify(samples, null, 2));
-    } catch (e) {
-      console.error("睡眠取得失敗", e);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <Text>HealthKit利用可否: {String(available)}</Text>
@@ -86,6 +40,7 @@ export default function App() {
       <Button title="歩数を取得" onPress={fetchSteps} />
       <Button title="睡眠を取得" onPress={fetchSleep} />
       <Button title="睡眠時間を算出" onPress={handleSleep} />
+      <Button title="ストレージ確認" onPress={handleStorageTest} />
     </View>
   );
 }
@@ -105,4 +60,20 @@ const handleSleep = async () => {
   if (minutes !== null) {
     console.log(`${Math.floor(minutes / 60)}時間${minutes % 60}分`);
   }
+};
+
+const handleStorageTest = async () => {
+  const today = toDateKey(new Date());
+
+  // 保存
+  await saveDay(today, { happiness: 4 });
+  console.log("保存後:", await getDay(today));
+
+  // マージの確認（happiness が消えないこと）
+  await saveDay(today, { steps: 8432 });
+  console.log("マージ後:", await getDay(today));
+
+  // 一括取得
+  const keys = getRecentDateKeys(7);
+  console.log("直近7日:", await getDays(keys));
 };

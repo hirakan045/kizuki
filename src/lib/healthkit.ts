@@ -4,8 +4,31 @@ import HealthKit, {
   requestAuthorization,
 } from "@kingstinct/react-native-healthkit";
 
-/** 睡眠時間に含めるステージ（inBed=0, awake=2 は除外） */
-const ASLEEP_VALUES = [1, 3, 4, 5];
+/**
+ * HKCategoryValueSleepAnalysis の値。
+ * Apple Watch はステージ別に細分化して記録する。
+ */
+const SleepStage = {
+  inBed: 0,
+  asleepUnspecified: 1,
+  awake: 2,
+  asleepCore: 3,
+  asleepDeep: 4,
+  asleepREM: 5,
+} as const;
+
+/**
+ * 睡眠時間に含めるステージ。
+ * inBed（就床）と awake（覚醒）は除外する。
+ * ベッドにいた時間と実際に眠っていた時間は別物であり、
+ * 含めると睡眠時間が過大になるため。
+ */
+const ASLEEP_VALUES: number[] = [
+  SleepStage.asleepUnspecified,
+  SleepStage.asleepCore,
+  SleepStage.asleepDeep,
+  SleepStage.asleepREM,
+];
 
 /** Apple Watch のソースかを判定する */
 const isAppleWatch = (sample: {
@@ -65,3 +88,52 @@ function dedupeBySource<
   }
   return largest;
 }
+
+// 歩数（統計クエリ = iPhone と Watch の重複を HealthKit 側で排除）
+export const fetchSteps = async () => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    const result = await HealthKit.queryStatisticsForQuantity(
+      "HKQuantityTypeIdentifierStepCount",
+      ["cumulativeSum"],
+      {
+        filter: {
+          date: { startDate: startOfDay, endDate: now },
+        },
+      },
+    );
+
+    console.log("歩数の統計:", JSON.stringify(result, null, 2));
+  } catch (e) {
+    console.error("歩数取得失敗", e);
+  }
+};
+
+// 睡眠（Category 型なので別関数）
+export const fetchSleep = async () => {
+  try {
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const samples = await HealthKit.queryCategorySamples(
+      "HKCategoryTypeIdentifierSleepAnalysis",
+      {
+        limit: 0,
+        filter: {
+          date: { startDate: yesterday, endDate: now },
+        },
+      },
+    );
+
+    console.log("睡眠サンプル数:", samples.length);
+    console.log("睡眠データ:", JSON.stringify(samples, null, 2));
+  } catch (e) {
+    console.error("睡眠取得失敗", e);
+  }
+};
