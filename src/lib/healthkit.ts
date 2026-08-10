@@ -1,8 +1,5 @@
 // src/lib/healthkit.ts
-import HealthKit, {
-  isHealthDataAvailable,
-  requestAuthorization,
-} from "@kingstinct/react-native-healthkit";
+import HealthKit from '@kingstinct/react-native-healthkit';
 
 /**
  * HKCategoryValueSleepAnalysis の値。
@@ -31,12 +28,8 @@ const ASLEEP_VALUES: number[] = [
 ];
 
 /** Apple Watch のソースかを判定する */
-const isAppleWatch = (sample: {
-  sourceRevision?: { source?: { bundleIdentifier?: string } };
-}) =>
-  sample.sourceRevision?.source?.bundleIdentifier?.startsWith(
-    "com.apple.health",
-  ) ?? false;
+const isAppleWatch = (sample: { sourceRevision?: { source?: { bundleIdentifier?: string } } }) =>
+  sample.sourceRevision?.source?.bundleIdentifier?.startsWith('com.apple.health') ?? false;
 
 /**
  * 指定日の睡眠時間（分）を取得する。
@@ -50,19 +43,19 @@ export async function fetchSleepMinutes(date: Date): Promise<number | null> {
   const end = new Date(date);
   end.setHours(12, 0, 0, 0);
 
-  const samples = await HealthKit.queryCategorySamples(
-    "HKCategoryTypeIdentifierSleepAnalysis",
-    { limit: 0, filter: { date: { startDate: start, endDate: end } } },
-  );
+  const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
+    limit: 0,
+    filter: { date: { startDate: start, endDate: end } },
+  });
 
   // 複数ソースが同一時間帯を重複記録するため、Apple Watch に限定する
   const watchSamples = samples.filter(isAppleWatch);
-  const target: readonly (typeof samples)[number][] =
+  const usableSamples: readonly (typeof samples)[number][] =
     watchSamples.length > 0 ? watchSamples : dedupeBySource(samples);
 
-  if (target.length === 0) return null;
+  if (usableSamples.length === 0) return null;
 
-  const totalMs = target
+  const totalMs = usableSamples
     .filter((s) => ASLEEP_VALUES.includes(s.value))
     .reduce((sum, s) => {
       const from = new Date(s.startDate).getTime();
@@ -74,12 +67,12 @@ export async function fetchSleepMinutes(date: Date): Promise<number | null> {
 }
 
 /** Apple Watch が無い場合、サンプル数が最も多いソース1つに絞る */
-function dedupeBySource<
-  T extends { sourceRevision?: { source?: { bundleIdentifier?: string } } },
->(samples: readonly T[]): T[] {
+function dedupeBySource<T extends { sourceRevision?: { source?: { bundleIdentifier?: string } } }>(
+  samples: readonly T[],
+): T[] {
   const groups = new Map<string, T[]>();
   for (const s of samples) {
-    const id = s.sourceRevision?.source?.bundleIdentifier ?? "unknown";
+    const id = s.sourceRevision?.source?.bundleIdentifier ?? 'unknown';
     groups.set(id, [...(groups.get(id) ?? []), s]);
   }
   let largest: T[] = [];
@@ -93,15 +86,11 @@ function dedupeBySource<
 export const fetchSteps = async () => {
   try {
     const now = new Date();
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     const result = await HealthKit.queryStatisticsForQuantity(
-      "HKQuantityTypeIdentifierStepCount",
-      ["cumulativeSum"],
+      'HKQuantityTypeIdentifierStepCount',
+      ['cumulativeSum'],
       {
         filter: {
           date: { startDate: startOfDay, endDate: now },
@@ -109,9 +98,9 @@ export const fetchSteps = async () => {
       },
     );
 
-    console.log("歩数の統計:", JSON.stringify(result, null, 2));
+    console.log('歩数の統計:', JSON.stringify(result, null, 2));
   } catch (e) {
-    console.error("歩数取得失敗", e);
+    console.error('歩数取得失敗', e);
   }
 };
 
@@ -121,19 +110,16 @@ export const fetchSleep = async () => {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const samples = await HealthKit.queryCategorySamples(
-      "HKCategoryTypeIdentifierSleepAnalysis",
-      {
-        limit: 0,
-        filter: {
-          date: { startDate: yesterday, endDate: now },
-        },
+    const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
+      limit: 0,
+      filter: {
+        date: { startDate: yesterday, endDate: now },
       },
-    );
+    });
 
-    console.log("睡眠サンプル数:", samples.length);
-    console.log("睡眠データ:", JSON.stringify(samples, null, 2));
+    console.log('睡眠サンプル数:', samples.length);
+    console.log('睡眠データ:', JSON.stringify(samples, null, 2));
   } catch (e) {
-    console.error("睡眠取得失敗", e);
+    console.error('睡眠取得失敗', e);
   }
 };

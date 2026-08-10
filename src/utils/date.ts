@@ -7,8 +7,8 @@
  */
 export const toDateKey = (date: Date): string => {
   const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 };
 
@@ -17,7 +17,7 @@ export const toDateKey = (date: Date): string => {
  * 時刻はローカル時刻の 00:00:00 になる。
  */
 export const fromDateKey = (key: string): Date => {
-  const [y, m, d] = key.split("-").map(Number);
+  const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d);
 };
 
@@ -26,10 +26,7 @@ export const fromDateKey = (key: string): Date => {
  * @param days 取得する日数
  * @param from 基準日（省略時は今日）
  */
-export const getRecentDateKeys = (
-  days: number,
-  from: Date = new Date(),
-): string[] => {
+export const getRecentDateKeys = (days: number, from: Date = new Date()): string[] => {
   const keys: string[] = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(from);
@@ -42,5 +39,4 @@ export const getRecentDateKeys = (
 /**
  * 2つの Date が同じ日かを判定する。
  */
-export const isSameDay = (a: Date, b: Date): boolean =>
-  toDateKey(a) === toDateKey(b);
+export const isSameDay = (a: Date, b: Date): boolean => toDateKey(a) === toDateKey(b);
