@@ -33,12 +33,12 @@ export type HappinessLevel = (typeof HAPPINESS_LEVELS)[number];
  * データの蓄積状況に応じて成立するものが変わる。
  */
 export type DiscoveryKind =
-  | "personalBest" // D-1 過去最高
-  | "deviationFromAverage" // D-2 平均との差
-  | "correlation" // D-3 連動
-  | "weekdayPattern" // D-4 曜日の傾向
-  | "weeklyChange" // D-5 週次の変化
-  | "dataAccumulation"; // D-6 データ蓄積の予告（フォールバック）
+  | 'personalBest' // D-1 過去最高
+  | 'deviationFromAverage' // D-2 平均との差
+  | 'correlation' // D-3 連動
+  | 'weekdayPattern' // D-4 曜日の傾向
+  | 'weeklyChange' // D-5 週次の変化
+  | 'dataAccumulation'; // D-6 データ蓄積の予告（フォールバック）
 
 /** レポート生成時に AI へ渡す発見の素材 */
 export type Discovery = {
