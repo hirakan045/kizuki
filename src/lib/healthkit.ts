@@ -1,5 +1,17 @@
 // src/lib/healthkit.ts
-import HealthKit from '@kingstinct/react-native-healthkit';
+import HealthKit, {
+  isHealthDataAvailable,
+  requestAuthorization,
+} from '@kingstinct/react-native-healthkit';
+
+export const checkHealthDataAvailable = (): boolean => isHealthDataAvailable();
+
+/** 権限リクエスト完了後にデータ取得を実行すること（PRD F-1-3。認証前に呼ぶとクラッシュする） */
+export async function requestHealthAuthorization(): Promise<boolean> {
+  return requestAuthorization({
+    toRead: ['HKQuantityTypeIdentifierStepCount', 'HKCategoryTypeIdentifierSleepAnalysis'],
+  });
+}
 
 /**
  * HKCategoryValueSleepAnalysis の値。
@@ -82,44 +94,23 @@ function dedupeBySource<T extends { sourceRevision?: { source?: { bundleIdentifi
   return largest;
 }
 
-// 歩数（統計クエリ = iPhone と Watch の重複を HealthKit 側で排除）
-export const fetchSteps = async () => {
-  try {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+/**
+ * 指定日の歩数を取得する。
+ * 統計クエリ（cumulativeSum）を使う。単純合計は iPhone と Watch の
+ * 重複記録で二重計上されるため使わない（PRD F-1-1）。
+ */
+export async function fetchStepsCount(date: Date): Promise<number | null> {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
 
-    const result = await HealthKit.queryStatisticsForQuantity(
-      'HKQuantityTypeIdentifierStepCount',
-      ['cumulativeSum'],
-      {
-        filter: {
-          date: { startDate: startOfDay, endDate: now },
-        },
-      },
-    );
+  const result = await HealthKit.queryStatisticsForQuantity(
+    'HKQuantityTypeIdentifierStepCount',
+    ['cumulativeSum'],
+    { filter: { date: { startDate: startOfDay, endDate: endOfDay } } },
+  );
 
-    console.log('歩数の統計:', JSON.stringify(result, null, 2));
-  } catch (e) {
-    console.error('歩数取得失敗', e);
-  }
-};
-
-// 睡眠（Category 型なので別関数）
-export const fetchSleep = async () => {
-  try {
-    const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
-      limit: 0,
-      filter: {
-        date: { startDate: yesterday, endDate: now },
-      },
-    });
-
-    console.log('睡眠サンプル数:', samples.length);
-    console.log('睡眠データ:', JSON.stringify(samples, null, 2));
-  } catch (e) {
-    console.error('睡眠取得失敗', e);
-  }
-};
+  const quantity = result.sumQuantity?.quantity;
+  return quantity !== undefined ? Math.round(quantity) : null;
+}

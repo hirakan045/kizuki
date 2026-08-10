@@ -3,6 +3,7 @@
     "name": "kizuki",
     "slug": "kizuki",
     "version": "1.0.0",
+    "scheme": "kizuki",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -37,7 +38,8 @@
           "NSHealthShareUsageDescription": "歩数と睡眠のデータを読み取って、あなた専用のレポートを作成します",
           "NSHealthUpdateUsageDescription": false
         }
-      ]
+      ],
+      "expo-router"
     ]
   }
 }

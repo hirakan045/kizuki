@@ -15,6 +15,11 @@ module.exports = [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+
+      // マウント時にHealthKit/AsyncStorageから非同期でデータを取得しsetStateするのが
+      // このアプリの標準パターンで、useEffect内での利用は避けられない。
+      // このルールはReact Compiler向けの警告で、その正当なケースも一律に検出してしまう。
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
   {
