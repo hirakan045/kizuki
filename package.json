@@ -30,10 +30,9 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "start": "expo start --dev-client",
+    "start:tunnel": "expo start --dev-client --tunnel",
+    "build:dev": "eas build --profile development --platform ios",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
