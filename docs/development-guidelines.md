@@ -326,7 +326,48 @@ v1では網羅率を追わない。**壊れたときに気づけない箇所**�
 
 ---
 
-## 9. Git
+## 9. Git / GitHub 運用
+
+### 基本方針
+
+⚠️ **main への直接コミットは行わない。必ずブランチを切り、Pull Request を経由する。**
+
+個人開発だが PR を挟む理由:
+
+- GitHub 上で差分を確認できる（自分によるセルフレビュー）
+- レビューの記録が残る
+- 将来的に自動レビュー（Claude Code Action 等）を組み込める
+
+### ブランチ
+
+#### 命名
+
+```
+feature/[機能名]     # 機能追加
+fix/[対象]           # バグ修正
+docs/[対象]          # ドキュメントのみ
+refactor/[対象]      # 内部改善
+chore/[対象]         # 設定・依存関係
+```
+
+**例**
+
+```
+feature/screens
+feature/ai-report
+fix/step-count-duplication
+docs/functional-design
+```
+
+#### 粒度
+
+**WBS の中項目単位でブランチを切る。**タスク1つごとにPRを作ると数が多くなりすぎる。
+
+| ブランチ               | 対応するWBS    |
+| ---------------------- | -------------- |
+| `feature/screens`      | 4章 画面実装   |
+| `feature/ai-report`    | 5章 AIレポート |
+| `feature/notification` | 6章 通知       |
 
 ### コミットメッセージ
 
@@ -353,19 +394,72 @@ fix: 歩数を統計クエリで取得するよう修正
 docs: PRDに当日入力の仕様を追記
 ```
 
-### ブランチ
+### 作業の流れ
 
-個人開発のため、`main` への直接コミットを許容する。
-ただし**大きな機能追加はブランチを切る。**
+```bash
+# 1. ブランチを切る
+git switch -c feature/screens
 
+# 2. 実装してコミット（動く状態でコミットする）
+git add -A
+git commit -m "feat: タブナビゲーションを実装"
+
+# 3. push
+git push -u origin feature/screens
+
+# 4. PR を作成
+gh pr create --title "画面実装" --body "$(cat <<'EOF'
+## 概要
+タブ構成と今日の画面を実装
+
+## 対応するWBS
+- 4.1.1 ナビゲーション構成
+- 4.2.1 今日の画面レイアウト
+
+## 確認したこと
+- 実機でタブ切り替えが動作する
+- 型チェック・Lint が通る
+EOF
+)"
+
+# 5. ブラウザで差分を確認
+gh pr view --web
+
+# 6. 問題なければマージ
+gh pr merge --squash --delete-branch
+
+# 7. main に戻る
+git switch main
+git pull
 ```
-feature/happiness-input
-fix/step-count-duplication
+
+### GitHub CLI のセットアップ
+
+```bash
+brew install gh
+gh auth login
 ```
+
+未導入の場合は、`git push` 時にターミナルへ表示される URL から PR を作成する。
+
+### PR の本文に含めるもの
+
+| 項目         | 内容                                   |
+| ------------ | -------------------------------------- |
+| 概要         | 何を実装したか（1〜2行）               |
+| 対応するWBS  | タスク番号                             |
+| 確認したこと | 実機確認の結果、型チェック・Lintの結果 |
+| 判断したこと | 設計上の選択があれば（任意）           |
+
+💡 **「判断したこと」は DEVLOG と面接の材料になる。**迷った点があれば書き残す。
 
 ### コミットの粒度
 
 **動く状態でコミットする。**壊れた状態を残さない。
+
+### マージ方法
+
+**Squash merge を使う。**PR単位で履歴が1コミットにまとまり、後から追いやすい。
 
 ⚠️ `.env` や APIキーを含むファイルを絶対にコミットしない。`.gitignore` に必ず追加する。
 
