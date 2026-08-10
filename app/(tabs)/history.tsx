@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { getDays } from '../../src/storage/dayRecord';
 import { getRecentDateKeys } from '../../src/utils/date';
 import { DayListItem } from '../../src/components/DayListItem';
+import { TrendChart } from '../../src/components/TrendChart';
 import type { DayRecord } from '../../src/types';
 
 const HISTORY_DAYS = 30;
@@ -40,6 +41,17 @@ export default function HistoryScreen() {
       style={styles.list}
       data={rows}
       keyExtractor={(row) => row.dateKey}
+      ListHeaderComponent={
+        <TrendChart
+          data={[...rows]
+            .reverse()
+            .map((row) => ({
+              dateKey: row.dateKey,
+              steps: row.record?.steps ?? null,
+              sleepMinutes: row.record?.sleepMinutes ?? null,
+            }))}
+        />
+      }
       renderItem={({ item }) => (
         <DayListItem
           dateKey={item.dateKey}
