@@ -22,6 +22,9 @@ export type DayRecord = {
 
   /** レポート生成日時（ISO 8601） */
   generatedAt?: string;
+
+  /** そのレポートで使われた発見の種類（3日連続回避の判定に使う） */
+  discoveryKind?: DiscoveryKind;
 };
 
 /** 幸福度の選択肢 */
@@ -39,10 +42,3 @@ export type DiscoveryKind =
   | 'weekdayPattern' // D-4 曜日の傾向
   | 'weeklyChange' // D-5 週次の変化
   | 'dataAccumulation'; // D-6 データ蓄積の予告（フォールバック）
-
-/** レポート生成時に AI へ渡す発見の素材 */
-export type Discovery = {
-  kind: DiscoveryKind;
-  /** AI に渡す事実の記述。促す表現を含めない */
-  fact: string;
-};
