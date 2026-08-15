@@ -73,7 +73,10 @@ export default function DayDetailScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Stack.Screen
-        options={{ title: formatDateWithWeekday(dateObj), headerBackTitle: '' }}
+        options={{
+          title: formatDateWithWeekday(dateObj),
+          headerBackButtonDisplayMode: 'minimal',
+        }}
       />
 
       <View style={styles.metrics}>
@@ -87,7 +90,7 @@ export default function DayDetailScreen() {
         <View style={styles.happinessRow}>
           <Text style={styles.happiness}>幸福度:</Text>
           {happinessIcon && (
-            <MaterialCommunityIcons name={happinessIcon.icon} size={20} color={happinessIcon.color} />
+            <MaterialCommunityIcons name={happinessIcon.icon} size={28} color={happinessIcon.color} />
           )}
         </View>
       ) : (

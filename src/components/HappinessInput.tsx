@@ -20,7 +20,7 @@ export function HappinessInput({ question, onSelect }: Props) {
             onPress={() => onSelect(option.value)}
             style={styles.option}
           >
-            <MaterialCommunityIcons name={option.icon} size={32} color={option.color} />
+            <MaterialCommunityIcons name={option.icon} size={40} color={option.color} />
             <Text style={styles.label}>{option.label}</Text>
           </Pressable>
         ))}

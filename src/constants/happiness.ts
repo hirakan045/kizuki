@@ -14,11 +14,11 @@ export const HAPPINESS_OPTIONS: {
   color: string;
   label: string;
 }[] = [
-  { value: 1, icon: 'emoticon-cry-outline', color: '#B0BEC5', label: 'よくなかった' },
-  { value: 2, icon: 'emoticon-sad-outline', color: '#90A4AE', label: 'あまりよくなかった' },
-  { value: 3, icon: 'emoticon-neutral-outline', color: '#78909C', label: 'ふつう' },
-  { value: 4, icon: 'emoticon-happy-outline', color: '#66BB6A', label: 'よかった' },
-  { value: 5, icon: 'emoticon-excited-outline', color: '#43A047', label: 'とてもよかった' },
+  { value: 1, icon: 'emoticon-cry-outline', color: '#616161', label: 'よくなかった' },
+  { value: 2, icon: 'emoticon-sad-outline', color: '#9E9E9E', label: 'あまりよくなかった' },
+  { value: 3, icon: 'emoticon-neutral-outline', color: '#AED581', label: 'ふつう' },
+  { value: 4, icon: 'emoticon-happy-outline', color: '#7CB342', label: 'よかった' },
+  { value: 5, icon: 'emoticon-excited-outline', color: '#2E7D32', label: 'とてもよかった' },
 ];
 
 export const happinessOption = (value: number) =>

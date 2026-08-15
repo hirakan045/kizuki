@@ -17,7 +17,7 @@ type Props = {
 export const DAY_LIST_COLUMN_WIDTHS = {
   gap: 12,
   date: 72,
-  happiness: 28,
+  happiness: 48,
 };
 
 export function DayListItem({ dateLabel, steps, sleepMinutes, happiness, onPress }: Props) {
@@ -31,7 +31,7 @@ export function DayListItem({ dateLabel, steps, sleepMinutes, happiness, onPress
       </Text>
       <View style={styles.emoji}>
         {option ? (
-          <MaterialCommunityIcons name={option.icon} size={18} color={option.color} />
+          <MaterialCommunityIcons name={option.icon} size={24} color={option.color} />
         ) : (
           <Text style={styles.value}>―</Text>
         )}
