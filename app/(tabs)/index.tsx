@@ -33,20 +33,13 @@ export default function TodayScreen() {
   const { generateAndSaveReport } = useReportGeneration();
 
   const load = useCallback(async () => {
-    console.log('[index.load] start');
     const isAvailable = checkHealthDataAvailable();
     setAvailable(isAvailable);
-    if (!isAvailable) {
-      console.log('[index.load] end (health data not available)');
-      return;
-    }
+    if (!isAvailable) return;
 
     const currentSettings = await getSettings();
     setSettings(currentSettings);
-    if (!currentSettings.healthAuthRequested) {
-      console.log('[index.load] end (auth not requested)');
-      return;
-    }
+    if (!currentSettings.healthAuthRequested) return;
 
     const now = new Date();
     const todayKey = toDateKey(now);
@@ -64,12 +57,6 @@ export default function TodayScreen() {
     setSteps(todaySteps);
     setSleepMinutes(todaySleep);
 
-    console.log('[metricsSync] today', { todaySteps, todaySleep });
-    console.log(
-      '[metricsSync] targets',
-      syncKeys.map((key, i) => ({ key, needsSync: needsMetricsSync(syncRecords[i]) })),
-    );
-
     // HealthKitへの同時並列クエリが多すぎると結果が欠落することがあるため、1日ずつ順番に処理する
     for (let i = 0; i < syncKeys.length; i++) {
       const key = syncKeys[i];
@@ -78,15 +65,11 @@ export default function TodayScreen() {
         const dayDate = fromDateKey(key);
         const daySteps = await fetchStepsCount(dayDate);
         const daySleep = await fetchSleepMinutes(dayDate);
-        console.log('[metricsSync] fetched', { key, daySteps, daySleep });
         if (daySteps !== null || daySleep !== null) {
-          const saved = await saveDay(key, {
+          await saveDay(key, {
             ...(daySteps !== null ? { steps: daySteps } : {}),
             ...(daySleep !== null ? { sleepMinutes: daySleep } : {}),
           });
-          console.log('[metricsSync] saved', { key, saved });
-        } else {
-          console.log('[metricsSync] skipped save (both null)', { key });
         }
       } catch (e) {
         // 1日分の同期失敗が他の日・この後のレポート生成トリガーに影響しないようにする
@@ -105,7 +88,6 @@ export default function TodayScreen() {
       setPendingInput({ dateKey: yesterdayKey, question: '昨日はどんな一日でしたか' });
       setInputWindowNotYetOpen(false);
       setTodayRecord(null);
-      console.log('[index.load] end (pending yesterday input)');
       return;
     }
 
@@ -136,7 +118,6 @@ export default function TodayScreen() {
         );
       }
     }
-    console.log('[index.load] end');
   }, [generateAndSaveReport]);
 
   useEffect(() => {

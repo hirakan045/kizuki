@@ -26,11 +26,7 @@ export default function DayDetailScreen() {
   const { generateAndSaveReport } = useReportGeneration();
 
   const load = useCallback(async () => {
-    console.log('[day.load] start', date);
-    if (!date) {
-      console.log('[day.load] end (no date)');
-      return;
-    }
+    if (!date) return;
     const current = await getDay(date);
     setRecord(current);
 
@@ -48,7 +44,6 @@ export default function DayDetailScreen() {
       );
       if (saved) setRecord(saved);
     }
-    console.log('[day.load] end', date);
   }, [date, generateAndSaveReport]);
 
   useEffect(() => {

@@ -4,12 +4,7 @@ import HealthKit, {
   requestAuthorization,
 } from '@kingstinct/react-native-healthkit';
 
-export const checkHealthDataAvailable = (): boolean => {
-  console.log('[healthkit.checkHealthDataAvailable] start');
-  const result = isHealthDataAvailable();
-  console.log('[healthkit.checkHealthDataAvailable] end ->', result);
-  return result;
-};
+export const checkHealthDataAvailable = (): boolean => isHealthDataAvailable();
 
 /** 権限リクエスト完了後にデータ取得を実行すること（PRD F-1-3。認証前に呼ぶとクラッシュする） */
 export async function requestHealthAuthorization(): Promise<boolean> {
@@ -53,7 +48,6 @@ const isAppleWatch = (sample: { sourceRevision?: { source?: { bundleIdentifier?:
  * 睡眠は日をまたぐため、前日18:00〜当日12:00 の範囲で取得する。
  */
 export async function fetchSleepMinutes(date: Date): Promise<number | null> {
-  console.log('[healthkit.fetchSleepMinutes] start', date.toDateString());
   const start = new Date(date);
   start.setDate(start.getDate() - 1);
   start.setHours(18, 0, 0, 0);
@@ -71,10 +65,7 @@ export async function fetchSleepMinutes(date: Date): Promise<number | null> {
   const usableSamples: readonly (typeof samples)[number][] =
     watchSamples.length > 0 ? watchSamples : dedupeBySource(samples);
 
-  if (usableSamples.length === 0) {
-    console.log('[healthkit.fetchSleepMinutes] end', date.toDateString(), '-> null (no samples)');
-    return null;
-  }
+  if (usableSamples.length === 0) return null;
 
   const totalMs = usableSamples
     .filter((s) => ASLEEP_VALUES.includes(s.value))
@@ -84,9 +75,7 @@ export async function fetchSleepMinutes(date: Date): Promise<number | null> {
       return sum + (to - from);
     }, 0);
 
-  const minutes = Math.round(totalMs / 60000);
-  console.log('[healthkit.fetchSleepMinutes] end', date.toDateString(), '->', minutes);
-  return minutes;
+  return Math.round(totalMs / 60000);
 }
 
 /** Apple Watch が無い場合、サンプル数が最も多いソース1つに絞る */
@@ -111,7 +100,6 @@ function dedupeBySource<T extends { sourceRevision?: { source?: { bundleIdentifi
  * 重複記録で二重計上されるため使わない（PRD F-1-1）。
  */
 export async function fetchStepsCount(date: Date): Promise<number | null> {
-  console.log('[healthkit.fetchStepsCount] start', date.toDateString());
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date(date);
@@ -124,7 +112,5 @@ export async function fetchStepsCount(date: Date): Promise<number | null> {
   );
 
   const quantity = result.sumQuantity?.quantity;
-  const steps = quantity !== undefined ? Math.round(quantity) : null;
-  console.log('[healthkit.fetchStepsCount] end', date.toDateString(), '->', steps);
-  return steps;
+  return quantity !== undefined ? Math.round(quantity) : null;
 }

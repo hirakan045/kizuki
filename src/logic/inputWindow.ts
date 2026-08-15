@@ -7,7 +7,6 @@ export function isTodayInputWindowOpen(
   bedtimeHour: number,
   bedtimeMinute: number,
 ): boolean {
-  console.log('[inputWindow.isTodayInputWindowOpen] start', { now, bedtimeHour, bedtimeMinute });
   const windowStart = new Date(now);
   windowStart.setHours(bedtimeHour, bedtimeMinute, 0, 0);
   windowStart.setMinutes(windowStart.getMinutes() - 60);
@@ -20,7 +19,5 @@ export function isTodayInputWindowOpen(
     windowStart.setTime(startOfDay.getTime());
   }
 
-  const result = now >= windowStart;
-  console.log('[inputWindow.isTodayInputWindowOpen] end ->', result);
-  return result;
+  return now >= windowStart;
 }

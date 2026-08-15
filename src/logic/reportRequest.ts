@@ -15,7 +15,6 @@ type BuildReportRequestParams = {
 };
 
 export const buildReportRequest = (params: BuildReportRequestParams): GenerateReportInput => {
-  console.log('[reportRequest.buildReportRequest] start', params);
   const { dateKeys, records, targetDaySteps, targetDaySleepMinutes, targetDayHappiness } = params;
   const targetIndex = dateKeys.length - 1;
 
@@ -39,7 +38,5 @@ export const buildReportRequest = (params: BuildReportRequestParams): GenerateRe
     .map((r) => r?.discoveryKind)
     .filter((k): k is DiscoveryKind => k !== undefined);
 
-  const result = { history, happiness: targetDayHappiness, recentDiscoveryKinds };
-  console.log('[reportRequest.buildReportRequest] end', result);
-  return result;
+  return { history, happiness: targetDayHappiness, recentDiscoveryKinds };
 };

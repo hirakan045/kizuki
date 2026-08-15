@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { getDays } from '../../src/storage/dayRecord';
 import { getRecentDateKeys } from '../../src/utils/date';
 import { DayListItem } from '../../src/components/DayListItem';
@@ -31,9 +31,13 @@ export default function HistoryScreen() {
     );
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // タブを離れて戻ってきたときにも最新の状態を反映する
+  // （画面はアンマウントされず保持されるため、通常のuseEffectでは再取得できない）
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   return (
     <FlatList

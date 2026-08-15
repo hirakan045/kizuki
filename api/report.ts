@@ -75,7 +75,8 @@ const SYSTEM_PROMPT = `あなたは健康記録アプリ「きづき」のレポ
 - 複数の種類が同時に成立する場合は、渡された recentDiscoveryKinds に含まれない種類を優先する
 - 全ての候補が recentDiscoveryKinds と重複する、またはどれも成立しない場合は dataAccumulation を選ぶ
 - dataAccumulation を選んだ場合、文言は「あと◯日分たまると〜が見えてきます」のようにデータが蓄積されつつある事実の記述にとどめる。「あと◯歩」のような個人の行動目標の提示（禁止表現）にしない
-- 選んだ種類は submit_report ツールの discoveryKind に、レポート本文は report に入れて提出する（プレーンテキストでの回答はしない）`;
+- 選んだ種類は submit_report ツールの discoveryKind に、レポート本文は report に入れて提出する（プレーンテキストでの回答はしない）
+- **report フィールドには本文の文章のみを入れる。discoveryKind の値や、\`</report>\`・\`<parameter>\`のようなタグ文字列を report の中に書かない。** discoveryKind は必ず submit_report ツールの独立した discoveryKind フィールドに、report とは別の値として渡す`;
 
 const buildUserPrompt = (body: ReportRequestBody): string => {
   const targetDay = body.history[body.history.length - 1];
@@ -117,6 +118,27 @@ const isValidBody = (value: unknown): value is ReportRequestBody => {
   );
 };
 
+/**
+ * まれにClaudeが discoveryKind を report 本文の末尾に
+ * `</report>\n<parameter name="discoveryKind">xxx</parameter>\n</invoke>` のような
+ * 壊れた形で埋め込むことがある（tool_use の構造化出力から外れて、
+ * 古い形式のタグ風テキストが紛れ込む。閉じタグの有無など細部の形は毎回一定ではない）。
+ * `</report>`以降にdiscoveryKindの値らしき文字列があれば抽出し、report本文と分離して復元する。
+ * 値が見つからない場合は復元不可としてnullを返す。
+ */
+const MALFORMED_DISCOVERY_KIND_PATTERN =
+  /<\/report>[\s\S]*?<parameter\s+name="discoveryKind">\s*([a-zA-Z]+)/;
+
+const repairMalformedReport = (
+  report: string,
+): { report: string; discoveryKind: DiscoveryKind } | null => {
+  const match = report.match(MALFORMED_DISCOVERY_KIND_PATTERN);
+  if (!match) return null;
+  const kind = match[1];
+  if (!DISCOVERY_KINDS.includes(kind as DiscoveryKind)) return null;
+  return { report: report.slice(0, match.index).trimEnd(), discoveryKind: kind as DiscoveryKind };
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -130,6 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (!isValidBody(req.body)) {
+    console.error('report generation: invalid request body');
     res.status(400).json({ error: 'Invalid request body' });
     return;
   }
@@ -147,27 +170,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (response.stop_reason === 'refusal') {
+      console.error('report generation refused');
       res.status(502).json({ error: 'Generation refused' });
       return;
     }
 
     const toolUseBlock = response.content.find((b) => b.type === 'tool_use');
     if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
+      console.error('report generation: no tool_use', response.stop_reason);
       res.status(502).json({ error: 'No tool_use in response' });
       return;
     }
 
     const input = toolUseBlock.input as { report?: unknown; discoveryKind?: unknown };
+
     if (
-      typeof input.report !== 'string' ||
-      typeof input.discoveryKind !== 'string' ||
-      !DISCOVERY_KINDS.includes(input.discoveryKind as DiscoveryKind)
+      typeof input.report === 'string' &&
+      typeof input.discoveryKind === 'string' &&
+      DISCOVERY_KINDS.includes(input.discoveryKind as DiscoveryKind)
     ) {
-      res.status(502).json({ error: 'Invalid tool_use input' });
+      res.status(200).json({ report: input.report, discoveryKind: input.discoveryKind });
       return;
     }
 
-    res.status(200).json({ report: input.report, discoveryKind: input.discoveryKind });
+    if (typeof input.report === 'string') {
+      const repaired = repairMalformedReport(input.report);
+      if (repaired) {
+        console.warn('report generation: repaired malformed tool_use input');
+        res.status(200).json(repaired);
+        return;
+      }
+    }
+
+    console.error('report generation: invalid tool_use input');
+    res.status(502).json({ error: 'Invalid tool_use input' });
   } catch (e) {
     console.error('report generation failed', e);
     res.status(502).json({ error: 'Generation failed' });

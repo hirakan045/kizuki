@@ -20,17 +20,7 @@ export function useReportGeneration() {
       targetSleepMinutes: number | null,
       from: Date,
     ): Promise<DayRecord | null> => {
-      console.log('[useReportGeneration.generateAndSaveReport] start', {
-        targetKey,
-        happiness,
-        targetSteps,
-        targetSleepMinutes,
-        from,
-      });
-      if (generatingRef.current) {
-        console.log('[useReportGeneration.generateAndSaveReport] end (already generating)');
-        return null;
-      }
+      if (generatingRef.current) return null;
       generatingRef.current = true;
       try {
         const dateKeys = getRecentDateKeys(30, from).reverse();
@@ -43,18 +33,15 @@ export function useReportGeneration() {
           targetDayHappiness: happiness,
         });
         const result = await generateReport(input);
-        const saved = await saveDay(targetKey, {
+        return await saveDay(targetKey, {
           report: result.report,
           discoveryKind: result.discoveryKind,
           generatedAt: new Date().toISOString(),
           ...(targetSteps !== null ? { steps: targetSteps } : {}),
           ...(targetSleepMinutes !== null ? { sleepMinutes: targetSleepMinutes } : {}),
         });
-        console.log('[useReportGeneration.generateAndSaveReport] end', targetKey, '->', saved);
-        return saved;
       } catch (e) {
         console.error('generateAndSaveReport failed', targetKey, e);
-        console.log('[useReportGeneration.generateAndSaveReport] end (error)', targetKey);
         return null;
       } finally {
         generatingRef.current = false;

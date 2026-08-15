@@ -17,11 +17,8 @@ export const toDateKey = (date: Date): string => {
  * 時刻はローカル時刻の 00:00:00 になる。
  */
 export const fromDateKey = (key: string): Date => {
-  console.log('[date.fromDateKey] start', key);
   const [y, m, d] = key.split('-').map(Number);
-  const result = new Date(y, m - 1, d);
-  console.log('[date.fromDateKey] end', key, '->', result.toDateString());
-  return result;
+  return new Date(y, m - 1, d);
 };
 
 /**
@@ -30,14 +27,12 @@ export const fromDateKey = (key: string): Date => {
  * @param from 基準日（省略時は今日）
  */
 export const getRecentDateKeys = (days: number, from: Date = new Date()): string[] => {
-  console.log('[date.getRecentDateKeys] start', { days, from: from.toDateString() });
   const keys: string[] = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(from);
     d.setDate(d.getDate() - i);
     keys.push(toDateKey(d));
   }
-  console.log('[date.getRecentDateKeys] end', keys);
   return keys;
 };
 
@@ -53,9 +48,4 @@ export const isWithinRecentWindow = (
   dateKey: string,
   days: number,
   now: Date = new Date(),
-): boolean => {
-  console.log('[date.isWithinRecentWindow] start', { dateKey, days });
-  const result = getRecentDateKeys(days, now).includes(dateKey);
-  console.log('[date.isWithinRecentWindow] end', dateKey, '->', result);
-  return result;
-};
+): boolean => getRecentDateKeys(days, now).includes(dateKey);
