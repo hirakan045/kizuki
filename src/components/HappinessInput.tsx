@@ -1,3 +1,4 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { HAPPINESS_OPTIONS } from '../constants/happiness';
@@ -19,7 +20,7 @@ export function HappinessInput({ question, onSelect }: Props) {
             onPress={() => onSelect(option.value)}
             style={styles.option}
           >
-            <Text style={styles.emoji}>{option.emoji}</Text>
+            <MaterialCommunityIcons name={option.icon} size={40} color={option.color} />
             <Text style={styles.label}>{option.label}</Text>
           </Pressable>
         ))}
@@ -45,9 +46,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     padding: 4,
-  },
-  emoji: {
-    fontSize: 32,
   },
   label: {
     fontSize: 10,
