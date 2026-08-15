@@ -40,3 +40,12 @@ export const getRecentDateKeys = (days: number, from: Date = new Date()): string
  * 2つの Date が同じ日かを判定する。
  */
 export const isSameDay = (a: Date, b: Date): boolean => toDateKey(a) === toDateKey(b);
+
+/**
+ * 対象日が、基準日から直近 days 日以内（対象日を含む）かを判定する。
+ */
+export const isWithinRecentWindow = (
+  dateKey: string,
+  days: number,
+  now: Date = new Date(),
+): boolean => getRecentDateKeys(days, now).includes(dateKey);

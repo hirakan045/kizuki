@@ -6,12 +6,22 @@ const KEY_PREFIX = 'day:';
 const buildKey = (dateKey: string): string => `${KEY_PREFIX}${dateKey}`;
 
 /**
+ * アプリ内メモリキャッシュ。
+ * タブを行き来するたびにAsyncStorageへ読みに行くと体感できるラグが出るため、
+ * 一度読んだ・書いた日はここから即座に返す（起動中のみ有効、再起動でクリアされる）。
+ */
+const cache = new Map<string, DayRecord | null>();
+
+/**
  * 指定日の記録を取得する。存在しなければ null。
  */
 export const getDay = async (dateKey: string): Promise<DayRecord | null> => {
+  if (cache.has(dateKey)) return cache.get(dateKey) ?? null;
   try {
     const raw = await AsyncStorage.getItem(buildKey(dateKey));
-    return raw ? (JSON.parse(raw) as DayRecord) : null;
+    const result = raw ? (JSON.parse(raw) as DayRecord) : null;
+    cache.set(dateKey, result);
+    return result;
   } catch (e) {
     console.error('getDay failed', dateKey, e);
     return null;
@@ -31,6 +41,7 @@ export const saveDay = async (
     const current = (await getDay(dateKey)) ?? {};
     const merged: DayRecord = { ...current, ...patch };
     await AsyncStorage.setItem(buildKey(dateKey), JSON.stringify(merged));
+    cache.set(dateKey, merged);
     return merged;
   } catch (e) {
     console.error('saveDay failed', dateKey, e);
@@ -43,11 +54,17 @@ export const saveDay = async (
  * 存在しない日は null が入る（引数の順序と対応する）。
  */
 export const getDays = async (dateKeys: string[]): Promise<(DayRecord | null)[]> => {
-  try {
-    const pairs = await AsyncStorage.multiGet(dateKeys.map(buildKey));
-    return pairs.map(([, raw]) => (raw ? (JSON.parse(raw) as DayRecord) : null));
-  } catch (e) {
-    console.error('getDays failed', e);
-    return dateKeys.map(() => null);
+  const missingKeys = dateKeys.filter((k) => !cache.has(k));
+  if (missingKeys.length > 0) {
+    try {
+      const pairs = await AsyncStorage.multiGet(missingKeys.map(buildKey));
+      pairs.forEach(([, raw], i) => {
+        cache.set(missingKeys[i], raw ? (JSON.parse(raw) as DayRecord) : null);
+      });
+    } catch (e) {
+      console.error('getDays failed', e);
+      return dateKeys.map(() => null);
+    }
   }
+  return dateKeys.map((k) => cache.get(k) ?? null);
 };

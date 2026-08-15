@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { getDay, saveDay } from '../../src/storage/dayRecord';
-import { fromDateKey } from '../../src/utils/date';
+import { fromDateKey, isWithinRecentWindow } from '../../src/utils/date';
 import {
   formatDateQuestion,
   formatDateWithWeekday,
@@ -10,19 +10,41 @@ import {
   formatSteps,
 } from '../../src/utils/format';
 import { happinessEmoji } from '../../src/constants/happiness';
+import { useReportGeneration } from '../../src/hooks/useReportGeneration';
 import { HappinessInput } from '../../src/components/HappinessInput';
+import { GeneratingIndicator } from '../../src/components/GeneratingIndicator';
 import { ReportView } from '../../src/components/ReportView';
 import { colors } from '../../src/constants/colors';
 import type { DayRecord, HappinessLevel } from '../../src/types';
 
+/** レポートを生成する対象日として扱う範囲（5.3.8で歩数・睡眠が同期される範囲と合わせる） */
+const REPORT_WINDOW_DAYS = 30;
+
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const [record, setRecord] = useState<DayRecord | null>(null);
+  const { generateAndSaveReport } = useReportGeneration();
 
   const load = useCallback(async () => {
     if (!date) return;
-    setRecord(await getDay(date));
-  }, [date]);
+    const current = await getDay(date);
+    setRecord(current);
+
+    if (
+      current?.happiness !== undefined &&
+      current.report === undefined &&
+      isWithinRecentWindow(date, REPORT_WINDOW_DAYS)
+    ) {
+      const saved = await generateAndSaveReport(
+        date,
+        current.happiness,
+        current.steps ?? null,
+        current.sleepMinutes ?? null,
+        fromDateKey(date),
+      );
+      if (saved) setRecord(saved);
+    }
+  }, [date, generateAndSaveReport]);
 
   useEffect(() => {
     load();
@@ -55,7 +77,12 @@ export default function DayDetailScreen() {
         <HappinessInput question={formatDateQuestion(dateObj)} onSelect={handleSelectHappiness} />
       )}
 
-      {record?.report && <ReportView report={record.report} />}
+      {record?.report ? (
+        <ReportView report={record.report} />
+      ) : (
+        record?.happiness !== undefined &&
+        isWithinRecentWindow(date, REPORT_WINDOW_DAYS) && <GeneratingIndicator />
+      )}
     </ScrollView>
   );
 }
