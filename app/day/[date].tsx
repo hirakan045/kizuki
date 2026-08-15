@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { getDay, saveDay } from '../../src/storage/dayRecord';
+import { clearDay, getDay, saveDay } from '../../src/storage/dayRecord';
 import { fromDateKey, isWithinRecentWindow } from '../../src/utils/date';
 import {
   formatDateQuestion,
@@ -56,6 +56,13 @@ export default function DayDetailScreen() {
     await load();
   };
 
+  /** プロンプト調整用。開発ビルドでのみ表示する（本番には出さない） */
+  const handleClearForTesting = async () => {
+    if (!date) return;
+    await clearDay(date);
+    await load();
+  };
+
   if (!date) return null;
 
   const dateObj = fromDateKey(date);
@@ -82,6 +89,10 @@ export default function DayDetailScreen() {
       ) : (
         record?.happiness !== undefined &&
         isWithinRecentWindow(date, REPORT_WINDOW_DAYS) && <GeneratingIndicator />
+      )}
+
+      {__DEV__ && (record?.happiness !== undefined || record?.report !== undefined) && (
+        <Button title="（テスト用）幸福度・レポートをクリア" onPress={handleClearForTesting} />
       )}
     </ScrollView>
   );

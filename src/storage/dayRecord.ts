@@ -50,6 +50,18 @@ export const saveDay = async (
 };
 
 /**
+ * 指定日の記録を完全に削除する（テスト用。プロンプト調整時の再生成に使う）。
+ */
+export const clearDay = async (dateKey: string): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(buildKey(dateKey));
+    cache.delete(dateKey);
+  } catch (e) {
+    console.error('clearDay failed', dateKey, e);
+  }
+};
+
+/**
  * 複数日の記録をまとめて取得する。
  * 存在しない日は null が入る（引数の順序と対応する）。
  */
