@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { clearDay, getDay, saveDay } from '../../src/storage/dayRecord';
@@ -6,10 +7,10 @@ import { fromDateKey, isWithinRecentWindow } from '../../src/utils/date';
 import {
   formatDateQuestion,
   formatDateWithWeekday,
-  formatSleepMinutes,
+  formatSleepDuration,
   formatSteps,
 } from '../../src/utils/format';
-import { happinessEmoji } from '../../src/constants/happiness';
+import { happinessOption } from '../../src/constants/happiness';
 import { useReportGeneration } from '../../src/hooks/useReportGeneration';
 import { HappinessInput } from '../../src/components/HappinessInput';
 import { GeneratingIndicator } from '../../src/components/GeneratingIndicator';
@@ -66,20 +67,29 @@ export default function DayDetailScreen() {
   if (!date) return null;
 
   const dateObj = fromDateKey(date);
+  const happinessIcon =
+    record?.happiness !== undefined ? happinessOption(record.happiness) : undefined;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Stack.Screen options={{ title: formatDateWithWeekday(dateObj) }} />
+      <Stack.Screen
+        options={{ title: formatDateWithWeekday(dateObj), headerBackTitle: '' }}
+      />
 
       <View style={styles.metrics}>
         <Text style={styles.steps}>{record?.steps != null ? formatSteps(record.steps) : '―'}</Text>
         <Text style={styles.sleep}>
-          睡眠 {record?.sleepMinutes != null ? formatSleepMinutes(record.sleepMinutes) : '―'}
+          睡眠 {record?.sleepMinutes != null ? formatSleepDuration(record.sleepMinutes) : '―'}
         </Text>
       </View>
 
       {record?.happiness !== undefined ? (
-        <Text style={styles.happiness}>幸福度: {happinessEmoji(record.happiness)}</Text>
+        <View style={styles.happinessRow}>
+          <Text style={styles.happiness}>幸福度:</Text>
+          {happinessIcon && (
+            <MaterialCommunityIcons name={happinessIcon.icon} size={20} color={happinessIcon.color} />
+          )}
+        </View>
       ) : (
         <HappinessInput question={formatDateQuestion(dateObj)} onSelect={handleSelectHappiness} />
       )}
@@ -116,6 +126,12 @@ const styles = StyleSheet.create({
   sleep: {
     fontSize: 18,
     color: colors.sleep,
+  },
+  happinessRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
   },
   happiness: {
     fontSize: 16,

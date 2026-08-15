@@ -2,11 +2,11 @@
 export const formatSteps = (steps: number): string =>
   `${String(Math.round(steps)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}歩`;
 
-/** 時間と分（glossary 4章） 例: 6時間52分 */
-export const formatSleepMinutes = (minutes: number): string => {
+/** 時間と分 例: 6h52m */
+export const formatSleepDuration = (minutes: number): string => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return `${h}時間${m}分`;
+  return `${h}h${m}m`;
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];

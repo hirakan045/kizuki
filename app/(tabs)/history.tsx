@@ -3,6 +3,7 @@ import { FlatList, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { getDays } from '../../src/storage/dayRecord';
 import { getRecentDateKeys } from '../../src/utils/date';
+import { DayListHeader } from '../../src/components/DayListHeader';
 import { DayListItem } from '../../src/components/DayListItem';
 import type { DayRecord } from '../../src/types';
 
@@ -44,6 +45,7 @@ export default function HistoryScreen() {
       style={styles.list}
       data={rows}
       keyExtractor={(row) => row.dateKey}
+      ListHeaderComponent={DayListHeader}
       renderItem={({ item }) => (
         <DayListItem
           dateKey={item.dateKey}

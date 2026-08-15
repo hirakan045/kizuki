@@ -1,12 +1,12 @@
 import { StyleSheet, Text } from 'react-native';
 import { colors } from '../constants/colors';
-import { formatSleepMinutes } from '../utils/format';
+import { formatSleepDuration } from '../utils/format';
 
 type Props = { minutes: number | null };
 
 export function SleepDisplay({ minutes }: Props) {
   return (
-    <Text style={styles.text}>睡眠 {minutes !== null ? formatSleepMinutes(minutes) : '―'}</Text>
+    <Text style={styles.text}>睡眠 {minutes !== null ? formatSleepDuration(minutes) : '―'}</Text>
   );
 }
 
