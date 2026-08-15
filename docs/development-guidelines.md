@@ -155,6 +155,9 @@ src/
 │   ├── statistics.ts               # 平均・偏差の計算
 │   └── inputWindow.ts              # 入力可能時間帯の判定
 │
+├── hooks/                          # 複数画面で使う状態・副作用のカスタムフック
+│   └── useReportGeneration.ts      # レポート生成・保存（今日タブ／日別詳細画面で共通）
+│
 ├── types/                          # 型定義
 │   └── index.ts                    # DayRecord, Discovery など
 │
@@ -175,6 +178,7 @@ src/
 | `src/lib/`        | 外部システムとの通信           | あり                    |
 | `src/storage/`    | 永続化。AsyncStorage をラップ  | あり                    |
 | `src/logic/`      | 計算・判定。**純粋関数で書く** | **なし**                |
+| `src/hooks/`      | 複数画面で使う状態・副作用のカスタムフック | あり（内部で`lib/`・`storage/`を呼ぶ） |
 | `src/types/`      | 型定義のみ                     | —                       |
 | `src/constants/`  | 定数のみ                       | —                       |
 | `src/utils/`      | 汎用処理                       | なし                    |
@@ -205,6 +209,7 @@ types/, constants/, utils/
 | 外部APIの呼び出し      | `src/lib/`                       |
 | データの保存・読み出し | `src/storage/`                   |
 | 計算・判定             | `src/logic/`                     |
+| 複数画面で使う状態＋副作用 | `src/hooks/`                  |
 | 日付・文字列の変換     | `src/utils/`                     |
 | 色・初期値・固定文言   | `src/constants/`                 |
 

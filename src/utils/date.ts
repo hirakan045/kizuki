@@ -17,8 +17,11 @@ export const toDateKey = (date: Date): string => {
  * 時刻はローカル時刻の 00:00:00 になる。
  */
 export const fromDateKey = (key: string): Date => {
+  console.log('[date.fromDateKey] start', key);
   const [y, m, d] = key.split('-').map(Number);
-  return new Date(y, m - 1, d);
+  const result = new Date(y, m - 1, d);
+  console.log('[date.fromDateKey] end', key, '->', result.toDateString());
+  return result;
 };
 
 /**
@@ -27,12 +30,14 @@ export const fromDateKey = (key: string): Date => {
  * @param from 基準日（省略時は今日）
  */
 export const getRecentDateKeys = (days: number, from: Date = new Date()): string[] => {
+  console.log('[date.getRecentDateKeys] start', { days, from: from.toDateString() });
   const keys: string[] = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(from);
     d.setDate(d.getDate() - i);
     keys.push(toDateKey(d));
   }
+  console.log('[date.getRecentDateKeys] end', keys);
   return keys;
 };
 
@@ -40,3 +45,17 @@ export const getRecentDateKeys = (days: number, from: Date = new Date()): string
  * 2つの Date が同じ日かを判定する。
  */
 export const isSameDay = (a: Date, b: Date): boolean => toDateKey(a) === toDateKey(b);
+
+/**
+ * 対象日が、基準日から直近 days 日以内（対象日を含む）かを判定する。
+ */
+export const isWithinRecentWindow = (
+  dateKey: string,
+  days: number,
+  now: Date = new Date(),
+): boolean => {
+  console.log('[date.isWithinRecentWindow] start', { dateKey, days });
+  const result = getRecentDateKeys(days, now).includes(dateKey);
+  console.log('[date.isWithinRecentWindow] end', dateKey, '->', result);
+  return result;
+};

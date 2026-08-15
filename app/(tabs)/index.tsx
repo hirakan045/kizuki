@@ -8,8 +8,10 @@ import {
 } from '../../src/lib/healthkit';
 import { getDay, getDays, saveDay } from '../../src/storage/dayRecord';
 import { getSettings, saveSettings, type Settings } from '../../src/storage/settings';
-import { getRecentDateKeys, toDateKey } from '../../src/utils/date';
+import { fromDateKey, getRecentDateKeys, toDateKey } from '../../src/utils/date';
 import { isTodayInputWindowOpen } from '../../src/logic/inputWindow';
+import { needsMetricsSync } from '../../src/logic/metricsSync';
+import { useReportGeneration } from '../../src/hooks/useReportGeneration';
 import { StepsDisplay } from '../../src/components/StepsDisplay';
 import { SleepDisplay } from '../../src/components/SleepDisplay';
 import { HappinessInput } from '../../src/components/HappinessInput';
@@ -28,15 +30,23 @@ export default function TodayScreen() {
   const [todayRecord, setTodayRecord] = useState<DayRecord | null>(null);
   const [pendingInput, setPendingInput] = useState<PendingInput>(null);
   const [inputWindowNotYetOpen, setInputWindowNotYetOpen] = useState(false);
+  const { generateAndSaveReport } = useReportGeneration();
 
   const load = useCallback(async () => {
+    console.log('[index.load] start');
     const isAvailable = checkHealthDataAvailable();
     setAvailable(isAvailable);
-    if (!isAvailable) return;
+    if (!isAvailable) {
+      console.log('[index.load] end (health data not available)');
+      return;
+    }
 
     const currentSettings = await getSettings();
     setSettings(currentSettings);
-    if (!currentSettings.healthAuthRequested) return;
+    if (!currentSettings.healthAuthRequested) {
+      console.log('[index.load] end (auth not requested)');
+      return;
+    }
 
     const now = new Date();
     const todayKey = toDateKey(now);
@@ -44,12 +54,45 @@ export default function TodayScreen() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = toDateKey(yesterday);
 
-    const [todaySteps, todaySleep] = await Promise.all([
+    // 今日を除く直近30日分の歩数・睡眠を同期する（レポート未生成の日のみ、5.3.8）
+    const syncKeys = getRecentDateKeys(30, now).slice(1);
+    const [todaySteps, todaySleep, syncRecords] = await Promise.all([
       fetchStepsCount(now),
       fetchSleepMinutes(now),
+      getDays(syncKeys),
     ]);
     setSteps(todaySteps);
     setSleepMinutes(todaySleep);
+
+    console.log('[metricsSync] today', { todaySteps, todaySleep });
+    console.log(
+      '[metricsSync] targets',
+      syncKeys.map((key, i) => ({ key, needsSync: needsMetricsSync(syncRecords[i]) })),
+    );
+
+    // HealthKitへの同時並列クエリが多すぎると結果が欠落することがあるため、1日ずつ順番に処理する
+    for (let i = 0; i < syncKeys.length; i++) {
+      const key = syncKeys[i];
+      if (!needsMetricsSync(syncRecords[i])) continue;
+      try {
+        const dayDate = fromDateKey(key);
+        const daySteps = await fetchStepsCount(dayDate);
+        const daySleep = await fetchSleepMinutes(dayDate);
+        console.log('[metricsSync] fetched', { key, daySteps, daySleep });
+        if (daySteps !== null || daySleep !== null) {
+          const saved = await saveDay(key, {
+            ...(daySteps !== null ? { steps: daySteps } : {}),
+            ...(daySleep !== null ? { sleepMinutes: daySleep } : {}),
+          });
+          console.log('[metricsSync] saved', { key, saved });
+        } else {
+          console.log('[metricsSync] skipped save (both null)', { key });
+        }
+      } catch (e) {
+        // 1日分の同期失敗が他の日・この後のレポート生成トリガーに影響しないようにする
+        console.error('metrics sync failed', key, e);
+      }
+    }
 
     // 直近の記録が1件もない場合（インストール直後）は、
     // 存在しない「前日」の入力を求めない
@@ -62,6 +105,7 @@ export default function TodayScreen() {
       setPendingInput({ dateKey: yesterdayKey, question: '昨日はどんな一日でしたか' });
       setInputWindowNotYetOpen(false);
       setTodayRecord(null);
+      console.log('[index.load] end (pending yesterday input)');
       return;
     }
 
@@ -84,8 +128,16 @@ export default function TodayScreen() {
     } else {
       setPendingInput(null);
       setInputWindowNotYetOpen(false);
+      if (today.report === undefined) {
+        void generateAndSaveReport(todayKey, today.happiness, todaySteps, todaySleep, now).then(
+          (saved) => {
+            if (saved) setTodayRecord(saved);
+          },
+        );
+      }
     }
-  }, []);
+    console.log('[index.load] end');
+  }, [generateAndSaveReport]);
 
   useEffect(() => {
     load();

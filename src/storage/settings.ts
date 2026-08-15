@@ -19,13 +19,17 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 export async function getSettings(): Promise<Settings> {
+  console.log('[settings.getSettings] start');
   try {
     const raw = await AsyncStorage.getItem(KEY);
-    return raw
+    const result = raw
       ? { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) }
       : DEFAULT_SETTINGS;
+    console.log('[settings.getSettings] end ->', result);
+    return result;
   } catch (e) {
     console.error('getSettings failed', e);
+    console.log('[settings.getSettings] end (error)');
     return DEFAULT_SETTINGS;
   }
 }

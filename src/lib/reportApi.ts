@@ -25,6 +25,7 @@ export type GenerateReportResult = {
  * リトライ・オフライン時の挙動は呼び出し側（WBS 5.3.5）で扱う。
  */
 export async function generateReport(input: GenerateReportInput): Promise<GenerateReportResult> {
+  console.log('[reportApi.generateReport] start', input);
   const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/report`, {
     method: 'POST',
     headers: {
@@ -35,8 +36,11 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
   });
 
   if (!response.ok) {
+    console.log('[reportApi.generateReport] end (error)', response.status);
     throw new Error(`generateReport failed: ${response.status}`);
   }
 
-  return (await response.json()) as GenerateReportResult;
+  const result = (await response.json()) as GenerateReportResult;
+  console.log('[reportApi.generateReport] end', result);
+  return result;
 }

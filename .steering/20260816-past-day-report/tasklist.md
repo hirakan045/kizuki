@@ -1,0 +1,21 @@
+# タスクリスト — 過去日のレポート生成（WBS 5.3.8, 5.3.9）
+
+- [ ] `src/logic/metricsSync.ts` を実装（`needsMetricsSync`）
+- [ ] `src/utils/date.ts` に `isWithinRecentWindow` を追加
+- [ ] `src/hooks/useReportGeneration.ts` を実装（`generateAndSaveReport` を共通化）
+- [ ] `app/(tabs)/index.tsx`: `load()` に直近30日分（今日を除く）の歩数・睡眠同期を追加
+- [ ] `app/(tabs)/index.tsx`: ローカルの生成処理を `useReportGeneration` フック利用に置き換え
+- [ ] `app/day/[date].tsx`: `load()` に生成トリガー（幸福度入力済み・レポート未生成・直近30日以内）を追加
+- [ ] `app/day/[date].tsx`: `handleSelectHappiness` を `load()` 呼び出しのみに整理
+- [ ] `app/day/[date].tsx`: `GeneratingIndicator` の表示分岐を追加
+- [ ] `src/types/index.ts`: `DayRecord` のコメント更新
+- [ ] `docs/product-requirements.md`: F-3-7 を追加
+- [ ] `docs/development-guidelines.md`: `src/hooks/` を構成表・配置判断表に追加
+- [ ] 型チェック・Lint
+- [ ] 実機: 幸福度記録済み・レポート未生成の過去日を開いて自動生成されることを確認
+- [ ] 実機: 未入力の過去日で幸福度を入力してレポート生成されることを確認
+- [ ] 実機: 31日以上前の未生成日で生成もインジケータも出ないことを確認
+- [ ] `vercel logs` でAPIが日ごとに1回だけ呼ばれていることを確認
+- [ ] アプリ再起動で直近30日分の `steps`/`sleepMinutes` が同期されることを確認
+- [ ] WBS.md 5.3.8, 5.3.9 を更新（状態・実績時間）
+- [ ] PR作成
